@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Bird Replay Viewer</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-panel: #252542;
+            --bg-input: #2d2d4a;
+            --accent: #5b7cfa;
+            --accent-hover: #4a6ae0;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --error: #ef4444;
+            --text-primary: #ffffff;
+            --text-muted: #a0a0b0;
+            --border: #3d3d5c;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 24px;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+        
+        .header svg {
+            width: 28px;
+            height: 28px;
+            fill: var(--accent);
+        }
+        
+        h1 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+        
+        .main-container {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+        }
+        
+        .game-panel {
+            background: var(--bg-panel);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid var(--border);
+        }
+        
+        .canvas-wrapper {
+            width: 360px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #87CEEB;
+        }
+        
+        canvas {
+            width: 360px;
+            height: 640px;
+            display: block;
+        }
+        
+        .controls {
+            margin-top: 16px;
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            width: 360px;
+        }
+        
+        .btn {
+            flex: 1;
+            background: var(--accent);
+            border: none;
+            color: white;
+            padding: 10px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: background 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        
+        .btn:hover {
+            background: var(--accent-hover);
+        }
+        
+        .btn:active {
+            transform: scale(0.98);
+        }
+        
+        .btn:disabled {
+            background: var(--bg-input);
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+        
+        .btn svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+        }
+        
+        .info-panel {
+            background: var(--bg-panel);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            width: 260px;
+        }
+        
+        .section-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+        
+        .stats {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            background: var(--bg-input);
+            border-radius: 6px;
+        }
+        
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+        
+        .stat-value {
+            font-weight: 600;
+            color: var(--success);
+            font-size: 13px;
+            font-family: 'SF Mono', Monaco, Consolas, monospace;
+        }
+        
+        .progress-bar {
+            margin-top: 14px;
+            height: 4px;
+            background: var(--bg-input);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            transition: width 0.1s ease;
+        }
+        
+        .section {
+            margin-top: 18px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        
+        select {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        .speed-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .speed-value {
+            font-family: 'SF Mono', Monaco, Consolas, monospace;
+            font-size: 12px;
+            min-width: 36px;
+            text-align: right;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            height: 4px;
+            -webkit-appearance: none;
+            background: var(--bg-input);
+            border-radius: 2px;
+            cursor: pointer;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+        }
+        
+        .speed-presets {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .speed-btn {
+            flex: 1;
+            min-width: 40px;
+            padding: 6px 4px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-muted);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        
+        .speed-btn:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+        
+        .speed-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+        
+        .file-upload {
+            margin-top: 14px;
+        }
+        
+        .file-upload input {
+            display: none;
+        }
+        
+        .file-upload-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 10px;
+            background: var(--bg-input);
+            border: 1px dashed var(--border);
+            border-radius: 6px;
+            color: var(--text-muted);
+            font-size: 12px;
+            cursor: pointer;
+            transition: border-color 0.15s, color 0.15s;
+        }
+        
+        .file-upload-label:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+        
+        .file-upload-label svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+        
+        .shortcuts {
+            margin-top: 18px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .shortcut-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 4px 10px;
+            font-size: 11px;
+        }
+        
+        .shortcut-key {
+            color: var(--text-muted);
+            font-family: 'SF Mono', Monaco, Consolas, monospace;
+            background: var(--bg-input);
+            padding: 2px 5px;
+            border-radius: 3px;
+            text-align: center;
+        }
+        
+        .shortcut-desc {
+            color: var(--text-muted);
+        }
+        
+        .status-message {
+            margin-top: 12px;
+            padding: 8px 10px;
+            background: var(--bg-input);
+            border-radius: 6px;
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        
+        .status-message.loading { color: var(--warning); }
+        .status-message.success { color: var(--success); }
+        .status-message.error { color: var(--error); }
+        
+        .mode-toggle {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+        
+        .mode-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        
+        .mode-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+        
+        .mode-btn:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+        
+        .mode-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+        
+        .play-controls {
+            display: none;
+            margin-top: 14px;
+            padding: 12px;
+            background: var(--bg-input);
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .play-controls.visible {
+            display: block;
+        }
+        
+        .play-controls p {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        
+        .play-controls .start-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--success);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        
+        .play-controls .start-btn:hover {
+            background: #3bc96a;
+        }
+        
+        .replay-controls {
+            display: block;
+        }
+        
+        .replay-controls.hidden {
+            display: none;
+        }
+        
+        @media (max-width: 700px) {
+            .main-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .info-panel {
+                width: 360px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14zM9 8l7 4-7 4V8z"/></svg>
+        <h1>Flappy Bird Replay Viewer</h1>
+    </div>
+    
+    <div class="main-container">
+        <div class="game-panel">
+            <div class="canvas-wrapper">
+                <canvas id="gameCanvas" width="288" height="512"></canvas>
+            </div>
+            <div class="controls">
+                <button class="btn" id="playPauseBtn">
+                    <svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    <span id="playPauseText">Play</span>
+                </button>
+                <button class="btn" id="stepBackBtn">
+                    <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                </button>
+                <button class="btn" id="stepForwardBtn">
+                    <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                </button>
+                <button class="btn" id="restartBtn">
+                    <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="info-panel">
+            <div class="mode-toggle">
+                <button class="mode-btn active" id="replayModeBtn">
+                    <svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14zM9 8l7 4-7 4V8z"/></svg>
+                    Replay
+                </button>
+                <button class="mode-btn" id="playModeBtn">
+                    <svg viewBox="0 0 24 24"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+                    Play
+                </button>
+            </div>
+            
+            <div class="section-title">Statistics</div>
+            
+            <div class="stats">
+                <div class="stat">
+                    <span class="stat-label">Score</span>
+                    <span class="stat-value" id="scoreValue">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Frame</span>
+                    <span class="stat-value" id="frameValue">0/0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Action</span>
+                    <span class="stat-value" id="actionValue">-</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Bird Y</span>
+                    <span class="stat-value" id="birdYValue">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Velocity</span>
+                    <span class="stat-value" id="velocityValue">0</span>
+                </div>
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            
+            <div class="replay-controls" id="replayControls">
+                <div class="section">
+                    <label class="form-label">Episode</label>
+                    <select id="episodeSelect">
+                        <option value="-1">Load a replay file...</option>
+                    </select>
+                </div>
+                
+                <div class="section">
+                    <label class="form-label">Playback Speed</label>
+                    <div class="speed-row">
+                        <input type="range" id="speedSlider" min="0.1" max="4" step="0.05" value="1">
+                        <span class="speed-value" id="speedValue">1.00x</span>
+                    </div>
+                    <div class="speed-presets">
+                        <button class="speed-btn" data-speed="0.25">0.25x</button>
+                        <button class="speed-btn" data-speed="0.5">0.5x</button>
+                        <button class="speed-btn active" data-speed="1">1x</button>
+                        <button class="speed-btn" data-speed="1.5">1.5x</button>
+                        <button class="speed-btn" data-speed="2">2x</button>
+                        <button class="speed-btn" data-speed="3">3x</button>
+                    </div>
+                </div>
+                
+                <div class="file-upload">
+                    <input type="file" id="fileInput" accept=".jsonl">
+                    <label for="fileInput" class="file-upload-label">
+                        <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+                        <span>Load replay.jsonl</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="play-controls" id="playControls">
+                <p>Press Space, click, or tap to flap!</p>
+                <button class="start-btn" id="startGameBtn">Start Game</button>
+            </div>
+            
+            <div class="shortcuts" id="replayShortcuts">
+                <div class="section-title">Shortcuts</div>
+                <div class="shortcut-grid">
+                    <span class="shortcut-key">Space</span>
+                    <span class="shortcut-desc">Play / Pause</span>
+                    <span class="shortcut-key">J / L</span>
+                    <span class="shortcut-desc">Step Back / Forward</span>
+                    <span class="shortcut-key">R</span>
+                    <span class="shortcut-desc">Restart</span>
+                    <span class="shortcut-key">H</span>
+                    <span class="shortcut-desc">Toggle Hitbox</span>
+                </div>
+            </div>
+            <div class="shortcuts" id="playShortcuts" style="display:none">
+                <div class="section-title">Controls</div>
+                <div class="shortcut-grid">
+                    <span class="shortcut-key">Space</span>
+                    <span class="shortcut-desc">Flap</span>
+                    <span class="shortcut-key">Click</span>
+                    <span class="shortcut-desc">Flap</span>
+                    <span class="shortcut-key">R</span>
+                    <span class="shortcut-desc">Reset Game</span>
+                    <span class="shortcut-key">H</span>
+                    <span class="shortcut-desc">Toggle Hitbox</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // GAME CONSTANTS (matching C implementation exactly)
+        // ============================================
+        let SCREEN_WIDTH = 288;
+        let SCREEN_HEIGHT = 512;
+        let BIRD_X = 50;
+        let BIRD_RADIUS = 12;
+        let PIPE_WIDTH = 52;
+        let PIPE_GAP = 100;
+        
+        // Physics constants (from flappybird.h)
+        const GRAVITY = 0.5;
+        const FLAP_VELOCITY = -8.0;
+        const MAX_VELOCITY = 10.0;
+        const PIPE_VELOCITY = -4.0;
+        const MIN_PIPE_HEIGHT = 50.0;
+        const MAX_STEPS = 2000;
+        const NUM_PIPES = 2;
+        
+        // Computed at runtime (depends on SCREEN_WIDTH/PIPE_WIDTH which may be updated)
+        function getPipeSpawnX() {
+            return SCREEN_WIDTH + PIPE_WIDTH;  // 288 + 52 = 340
+        }
+        
+        // ============================================
+        // MODE STATE
+        // ============================================
+        let currentMode = 'replay';  // 'replay' or 'play'
+        
+        // ============================================
+        // REPLAY MODE STATE
+        // ============================================
+        let replayData = null;
+        let currentEpisode = null;
+        let currentFrame = 0;
+        let isPlaying = false;
+        let playbackSpeed = 1.0;
+        let lastFrameTime = 0;
+        let showHitboxes = false;
+        const BASE_FRAME_DELAY = 1000 / 30; // 30 FPS base
+        
+        // ============================================
+        // PLAY MODE STATE (matching C struct exactly)
+        // ============================================
+        let gameState = {
+            // Bird state
+            bird_y: SCREEN_HEIGHT / 2,
+            bird_velocity: 0,
+            
+            // Pipes (matching Pipe struct)
+            pipes: [
+                { x: 0, gap_y: 0, passed: false },
+                { x: 0, gap_y: 0, passed: false }
+            ],
+            
+            // Game state
+            score: 0,
+            tick: 0,
+            
+            // Control
+            running: false,
+            gameOver: false,
+            flapRequested: false,
+            
+            // Stats
+            highScore: 0
+        };
+        
+        // Canvas
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // UI Elements
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const stepBackBtn = document.getElementById('stepBackBtn');
+        const stepForwardBtn = document.getElementById('stepForwardBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const episodeSelect = document.getElementById('episodeSelect');
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValue = document.getElementById('speedValue');
+        const fileInput = document.getElementById('fileInput');
+        const progressFill = document.getElementById('progressFill');
+        
+        // Colors
+        const COLORS = {
+            sky: '#87CEEB',
+            ground: '#DEB887',
+            bird: '#F59E0B',
+            birdOutline: '#D97706',
+            pipe: '#22C55E',
+            pipeOutline: '#16A34A',
+            pipeDark: '#15803D',
+            text: '#1F2937',
+            white: '#FFFFFF',
+        };
+        
+        function drawBackground() {
+            // Sky gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, SCREEN_HEIGHT);
+            gradient.addColorStop(0, '#4FC3F7');
+            gradient.addColorStop(1, '#87CEEB');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+            
+            // Clouds (decorative)
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            drawCloud(50, 80, 40);
+            drawCloud(150, 120, 30);
+            drawCloud(220, 60, 35);
+        }
+        
+        function drawCloud(x, y, size) {
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.arc(x + size * 0.8, y - size * 0.3, size * 0.7, 0, Math.PI * 2);
+            ctx.arc(x + size * 1.4, y, size * 0.8, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        function drawPipe(x, gapCenterY) {
+            const topHeight = gapCenterY - PIPE_GAP / 2;
+            const bottomY = gapCenterY + PIPE_GAP / 2;
+            const bottomHeight = SCREEN_HEIGHT - bottomY;
+            
+            // Pipe left and right edges (matching C hitbox exactly)
+            const pipeLeft = x - PIPE_WIDTH / 2;
+            const pipeRight = x + PIPE_WIDTH / 2;
+            
+            // Pipe gradient
+            const pipeGradient = ctx.createLinearGradient(pipeLeft, 0, pipeRight, 0);
+            pipeGradient.addColorStop(0, COLORS.pipeDark);
+            pipeGradient.addColorStop(0.3, COLORS.pipe);
+            pipeGradient.addColorStop(0.7, COLORS.pipe);
+            pipeGradient.addColorStop(1, COLORS.pipeDark);
+            
+            ctx.fillStyle = pipeGradient;
+            
+            // Top pipe (exact hitbox dimensions)
+            ctx.fillRect(pipeLeft, 0, PIPE_WIDTH, topHeight);
+            
+            // Bottom pipe (exact hitbox dimensions)
+            ctx.fillRect(pipeLeft, bottomY, PIPE_WIDTH, bottomHeight);
+            
+            // Decorative caps (inside the hitbox, not extending beyond)
+            ctx.fillStyle = COLORS.pipeDark;
+            ctx.fillRect(pipeLeft, topHeight - 15, PIPE_WIDTH, 15);
+            ctx.fillRect(pipeLeft, bottomY, PIPE_WIDTH, 15);
+            
+            // Outline
+            ctx.strokeStyle = COLORS.pipeOutline;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(pipeLeft, 0, PIPE_WIDTH, topHeight);
+            ctx.strokeRect(pipeLeft, bottomY, PIPE_WIDTH, bottomHeight);
+            
+            // Show hitbox if enabled
+            if (showHitboxes) {
+                ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([4, 4]);
+                ctx.strokeRect(pipeLeft, 0, PIPE_WIDTH, topHeight);
+                ctx.strokeRect(pipeLeft, bottomY, PIPE_WIDTH, bottomHeight);
+                ctx.setLineDash([]);
+            }
+        }
+        
+        function drawBird(y, velocity, action) {
+            ctx.save();
+            ctx.translate(BIRD_X, y);
+            
+            // Rotate based on velocity
+            const rotation = Math.min(Math.max(velocity * 3, -30), 90) * Math.PI / 180;
+            ctx.rotate(rotation);
+            
+            // Bird body - EXACT CIRCULAR HITBOX (BIRD_RADIUS = 12)
+            // The hitbox is a circle, so we draw a circle
+            ctx.fillStyle = COLORS.bird;
+            ctx.beginPath();
+            ctx.arc(0, 0, BIRD_RADIUS, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = COLORS.birdOutline;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Wing (decorative, inside the hitbox)
+            ctx.fillStyle = '#FBBF24';
+            ctx.beginPath();
+            const wingOffset = action === 1 ? -4 : 2;
+            ctx.ellipse(-2, wingOffset, 6, 4, action === 1 ? -0.3 : 0.3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Eye (smaller to fit in circle)
+            ctx.fillStyle = COLORS.white;
+            ctx.beginPath();
+            ctx.arc(4, -2, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#1F2937';
+            ctx.beginPath();
+            ctx.arc(5, -2, 2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Beak (starts at edge of hitbox circle)
+            ctx.fillStyle = '#EF4444';
+            ctx.beginPath();
+            ctx.moveTo(BIRD_RADIUS - 2, -2);
+            ctx.lineTo(BIRD_RADIUS + 4, 1);
+            ctx.lineTo(BIRD_RADIUS - 2, 4);
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.restore();
+            
+            // Show hitbox if enabled (draw in world space, not rotated)
+            if (showHitboxes) {
+                ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.arc(BIRD_X, y, BIRD_RADIUS, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+            
+            // Action indicator
+            if (action === 1) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.font = 'bold 16px Arial';
+                ctx.fillText('FLAP!', BIRD_X + 20, y - 20);
+            }
+        }
+        
+        function drawScore(score) {
+            ctx.fillStyle = COLORS.white;
+            ctx.strokeStyle = COLORS.text;
+            ctx.lineWidth = 3;
+            ctx.font = 'bold 48px Arial';
+            ctx.textAlign = 'center';
+            
+            const text = score.toString();
+            ctx.strokeText(text, SCREEN_WIDTH / 2, 60);
+            ctx.fillText(text, SCREEN_WIDTH / 2, 60);
+            ctx.textAlign = 'left';
+        }
+        
+        function drawGameOver() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+            
+            ctx.fillStyle = COLORS.white;
+            ctx.font = 'bold 36px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('GAME OVER', SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 20);
+            ctx.font = '20px Arial';
+            if (currentMode === 'replay' && currentEpisode) {
+                ctx.fillText(`Final Score: ${currentEpisode.score}`, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 20);
+            } else {
+                ctx.fillText(`Score: ${gameState.score}`, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 20);
+                ctx.font = '16px Arial';
+                ctx.fillText(`High Score: ${gameState.highScore}`, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 50);
+                ctx.font = '14px Arial';
+                ctx.fillStyle = '#aaa';
+                ctx.fillText('Press Space or Click to restart', SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 80);
+            }
+            ctx.textAlign = 'left';
+        }
+        
+        // ============================================
+        // PLAY MODE GAME LOGIC (matching C exactly)
+        // ============================================
+        
+        // Random float in range [min, max) - matching C's rand_float
+        function randFloat(min, max) {
+            return min + Math.random() * (max - min);
+        }
+        
+        // Spawn a new pipe (matching C's spawn_pipe exactly)
+        function spawnPipe(pipeIdx, baseX) {
+            const minGap = MIN_PIPE_HEIGHT + PIPE_GAP / 2;  // 50 + 50 = 100
+            const maxGap = SCREEN_HEIGHT - MIN_PIPE_HEIGHT - PIPE_GAP / 2;  // 512 - 50 - 50 = 412
+            
+            gameState.pipes[pipeIdx].x = baseX;
+            gameState.pipes[pipeIdx].gap_y = randFloat(minGap, maxGap);
+            gameState.pipes[pipeIdx].passed = false;
+        }
+        
+        // Reset game (matching C's c_reset exactly)
+        function resetGame() {
+            gameState.bird_y = SCREEN_HEIGHT / 2;  // 256
+            gameState.bird_velocity = 0;
+            gameState.score = 0;
+            gameState.tick = 0;
+            gameState.gameOver = false;
+            gameState.flapRequested = false;
+            
+            // Spawn initial pipes (matching C exactly)
+            const spawnX = getPipeSpawnX();
+            spawnPipe(0, spawnX);       // x = 340
+            spawnPipe(1, spawnX + 200); // x = 540
+        }
+        
+        // Check collision (matching C's check_collision exactly)
+        function checkCollision() {
+            const bird_y = gameState.bird_y;
+            
+            // Ceiling/floor collision
+            if (bird_y - BIRD_RADIUS < 0 || bird_y + BIRD_RADIUS > SCREEN_HEIGHT) {
+                return true;
+            }
+            
+            // Pipe collisions
+            for (let i = 0; i < NUM_PIPES; i++) {
+                const pipe_x = gameState.pipes[i].x;
+                const gap_y = gameState.pipes[i].gap_y;
+                
+                // Check if bird is horizontally within pipe
+                if (BIRD_X + BIRD_RADIUS > pipe_x - PIPE_WIDTH / 2 &&
+                    BIRD_X - BIRD_RADIUS < pipe_x + PIPE_WIDTH / 2) {
+                    
+                    // Check if bird is outside the gap
+                    const top_y = gap_y - PIPE_GAP / 2;
+                    const bottom_y = gap_y + PIPE_GAP / 2;
+                    
+                    if (bird_y - BIRD_RADIUS < top_y || bird_y + BIRD_RADIUS > bottom_y) {
+                        return true;
+                    }
+                }
+            }
+            
+            return false;
+        }
+        
+        // Game step (matching C's c_step exactly)
+        function gameStep() {
+            if (gameState.gameOver) return;
+            
+            // Apply flap if requested (matching: if (action > 0.5f) bird_velocity = FLAP_VELOCITY)
+            if (gameState.flapRequested) {
+                gameState.bird_velocity = FLAP_VELOCITY;
+                gameState.flapRequested = false;
+            }
+            
+            // Apply gravity (matching: bird_velocity += GRAVITY)
+            gameState.bird_velocity += GRAVITY;
+            
+            // Clamp velocity (matching C exactly)
+            if (gameState.bird_velocity > MAX_VELOCITY) {
+                gameState.bird_velocity = MAX_VELOCITY;
+            }
+            if (gameState.bird_velocity < -MAX_VELOCITY) {
+                gameState.bird_velocity = -MAX_VELOCITY;
+            }
+            
+            // Update position (matching: bird_y += bird_velocity)
+            gameState.bird_y += gameState.bird_velocity;
+            
+            // Move pipes and check for scoring
+            for (let i = 0; i < NUM_PIPES; i++) {
+                // Move pipe (matching: pipes[i].x += PIPE_VELOCITY)
+                gameState.pipes[i].x += PIPE_VELOCITY;
+                
+                // Check if bird passed this pipe
+                const pipe_x = gameState.pipes[i].x;
+                if (!gameState.pipes[i].passed && pipe_x + PIPE_WIDTH / 2 < BIRD_X) {
+                    gameState.pipes[i].passed = true;
+                    gameState.score += 1;
+                }
+                
+                // Respawn pipe if off screen (matching: if (pipe_x < -PIPE_WIDTH))
+                if (pipe_x < -PIPE_WIDTH) {
+                    spawnPipe(i, getPipeSpawnX());
+                }
+            }
+            
+            gameState.tick += 1;
+            
+            // Check for collision
+            if (checkCollision()) {
+                gameState.gameOver = true;
+                gameState.running = false;
+                if (gameState.score > gameState.highScore) {
+                    gameState.highScore = gameState.score;
+                }
+            }
+            
+            // Check for timeout (matching: tick >= MAX_STEPS)
+            if (gameState.tick >= MAX_STEPS) {
+                gameState.gameOver = true;
+                gameState.running = false;
+                if (gameState.score > gameState.highScore) {
+                    gameState.highScore = gameState.score;
+                }
+            }
+        }
+        
+        // Render play mode
+        function renderPlayMode() {
+            drawBackground();
+            
+            // Draw pipes
+            for (const pipe of gameState.pipes) {
+                drawPipe(pipe.x, pipe.gap_y);
+            }
+            
+            // Draw bird (action=1 if flapping recently for visual)
+            const isFlapping = gameState.bird_velocity < -4;
+            drawBird(gameState.bird_y, gameState.bird_velocity, isFlapping ? 1 : 0);
+            
+            // Draw score
+            drawScore(gameState.score);
+            
+            // Draw game over overlay
+            if (gameState.gameOver) {
+                drawGameOver();
+            }
+            
+            // Update stats display
+            updatePlayStats();
+        }
+        
+        // Update stats for play mode
+        function updatePlayStats() {
+            document.getElementById('scoreValue').textContent = gameState.score;
+            document.getElementById('frameValue').textContent = `${gameState.tick}/${MAX_STEPS}`;
+            document.getElementById('actionValue').textContent = gameState.flapRequested ? 'FLAP ↑' : 'IDLE';
+            document.getElementById('birdYValue').textContent = gameState.bird_y.toFixed(1);
+            document.getElementById('velocityValue').textContent = gameState.bird_velocity.toFixed(2);
+            
+            const progress = (gameState.tick / MAX_STEPS) * 100;
+            progressFill.style.width = `${progress}%`;
+        }
+        
+        // Draw start screen for play mode
+        function drawStartScreen() {
+            drawBackground();
+            
+            // Draw pipes in their starting positions
+            for (const pipe of gameState.pipes) {
+                drawPipe(pipe.x, pipe.gap_y);
+            }
+            
+            // Draw bird at starting position
+            drawBird(gameState.bird_y, 0, 0);
+            
+            // Draw overlay
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+            
+            ctx.fillStyle = COLORS.white;
+            ctx.font = 'bold 28px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('FLAPPY BIRD', SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 40);
+            ctx.font = '16px Arial';
+            ctx.fillText('Press Space or Click to Start', SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 10);
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#ccc';
+            ctx.fillText('Tap/Click or Space to Flap', SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 40);
+            if (gameState.highScore > 0) {
+                ctx.fillText(`High Score: ${gameState.highScore}`, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 65);
+            }
+            ctx.textAlign = 'left';
+        }
+        
+        // ============================================
+        // REPLAY MODE FUNCTIONS
+        // ============================================
+        
+        function renderFrame() {
+            if (!currentEpisode || currentFrame >= currentEpisode.frames.length) {
+                return;
+            }
+            
+            const frame = currentEpisode.frames[currentFrame];
+            
+            // Draw background
+            drawBackground();
+            
+            // Draw pipes
+            for (const pipe of frame.pipes) {
+                drawPipe(pipe[0], pipe[1]);
+            }
+            
+            // Draw bird
+            drawBird(frame.bird_y, frame.bird_velocity, frame.action);
+            
+            // Draw score
+            drawScore(frame.score);
+            
+            // Draw game over if terminal
+            if (frame.terminal) {
+                drawGameOver();
+            }
+            
+            // Update UI
+            updateStats(frame);
+        }
+        
+        function updateStats(frame) {
+            document.getElementById('scoreValue').textContent = frame.score;
+            document.getElementById('frameValue').textContent = 
+                `${currentFrame + 1}/${currentEpisode.frames.length}`;
+            document.getElementById('actionValue').textContent = 
+                frame.action === 1 ? 'FLAP ↑' : (frame.action === 0 ? 'IDLE' : '-');
+            document.getElementById('birdYValue').textContent = frame.bird_y.toFixed(1);
+            document.getElementById('velocityValue').textContent = frame.bird_velocity.toFixed(2);
+            
+            const progress = (currentFrame + 1) / currentEpisode.frames.length * 100;
+            progressFill.style.width = `${progress}%`;
+        }
+        
+        function gameLoop(timestamp) {
+            if (currentMode === 'replay') {
+                // Replay mode loop
+                if (isPlaying && currentEpisode) {
+                    const elapsed = timestamp - lastFrameTime;
+                    const frameDelay = BASE_FRAME_DELAY / playbackSpeed;
+                    
+                    if (elapsed >= frameDelay) {
+                        lastFrameTime = timestamp;
+                        
+                        if (currentFrame < currentEpisode.frames.length - 1) {
+                            currentFrame++;
+                            renderFrame();
+                        } else {
+                            isPlaying = false;
+                            updatePlayPauseButton();
+                        }
+                    }
+                }
+            } else if (currentMode === 'play') {
+                // Play mode loop - runs at 30 FPS to match C environment
+                if (gameState.running && !gameState.gameOver) {
+                    const elapsed = timestamp - lastFrameTime;
+                    
+                    if (elapsed >= BASE_FRAME_DELAY) {
+                        lastFrameTime = timestamp;
+                        gameStep();
+                        renderPlayMode();
+                    }
+                }
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function loadReplayData(jsonlContent) {
+            const lines = jsonlContent.trim().split('\n');
+            const episodes = [];
+            let metadata = null;
+            
+            for (const line of lines) {
+                const data = JSON.parse(line);
+                
+                if (data.type === 'metadata') {
+                    metadata = data;
+                    // Update constants
+                    if (data.constants) {
+                        SCREEN_HEIGHT = data.constants.screen_height || SCREEN_HEIGHT;
+                        SCREEN_WIDTH = data.constants.screen_width || SCREEN_WIDTH;
+                        BIRD_X = data.constants.bird_x || BIRD_X;
+                        BIRD_RADIUS = data.constants.bird_radius || BIRD_RADIUS;
+                        PIPE_WIDTH = data.constants.pipe_width || PIPE_WIDTH;
+                        PIPE_GAP = data.constants.pipe_gap || PIPE_GAP;
+                        
+                        canvas.width = SCREEN_WIDTH;
+                        canvas.height = SCREEN_HEIGHT;
+                    }
+                } else if (data.type === 'episode') {
+                    episodes.push(data);
+                }
+            }
+            
+            replayData = { metadata, episodes };
+            
+            // Populate episode selector
+            episodeSelect.innerHTML = '';
+            for (let i = 0; i < episodes.length; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `Episode ${i + 1} (Score: ${episodes[i].score}, Steps: ${episodes[i].steps})`;
+                episodeSelect.appendChild(option);
+            }
+            
+            // Load first episode
+            if (episodes.length > 0) {
+                loadEpisode(0);
+            }
+        }
+        
+        function loadEpisode(index) {
+            if (!replayData || index < 0 || index >= replayData.episodes.length) {
+                return;
+            }
+            
+            currentEpisode = replayData.episodes[index];
+            currentFrame = 0;
+            isPlaying = false;
+            updatePlayPauseButton();
+            
+            renderFrame();
+        }
+        
+        // Event listeners
+        playPauseBtn.addEventListener('click', () => {
+            if (!currentEpisode) return;
+            
+            isPlaying = !isPlaying;
+            updatePlayPauseButton();
+            
+            if (isPlaying && currentFrame >= currentEpisode.frames.length - 1) {
+                currentFrame = 0;
+            }
+        });
+        
+        function updatePlayPauseButton() {
+            const playIcon = document.getElementById('playIcon');
+            const playPauseText = document.getElementById('playPauseText');
+            if (isPlaying) {
+                playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+                playPauseText.textContent = 'Pause';
+            } else {
+                playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+                playPauseText.textContent = 'Play';
+            }
+        }
+        
+        stepBackBtn.addEventListener('click', () => {
+            if (!currentEpisode || currentFrame <= 0) return;
+            currentFrame--;
+            isPlaying = false;
+            updatePlayPauseButton();
+            renderFrame();
+        });
+        
+        stepForwardBtn.addEventListener('click', () => {
+            if (!currentEpisode || currentFrame >= currentEpisode.frames.length - 1) return;
+            currentFrame++;
+            isPlaying = false;
+            updatePlayPauseButton();
+            renderFrame();
+        });
+        
+        restartBtn.addEventListener('click', () => {
+            if (!currentEpisode) return;
+            currentFrame = 0;
+            isPlaying = false;
+            updatePlayPauseButton();
+            renderFrame();
+        });
+        
+        episodeSelect.addEventListener('change', (e) => {
+            const index = parseInt(e.target.value);
+            if (index >= 0) {
+                loadEpisode(index);
+            }
+        });
+        
+        speedSlider.addEventListener('input', (e) => {
+            playbackSpeed = parseFloat(e.target.value);
+            speedValue.textContent = `${playbackSpeed.toFixed(2)}x`;
+            updateSpeedButtonsActive();
+        });
+        
+        // Speed preset buttons
+        function updateSpeedButtonsActive() {
+            document.querySelectorAll('.speed-btn').forEach(btn => {
+                const btnSpeed = parseFloat(btn.dataset.speed);
+                if (Math.abs(btnSpeed - playbackSpeed) < 0.01) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+        
+        document.querySelectorAll('.speed-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                playbackSpeed = parseFloat(btn.dataset.speed);
+                speedSlider.value = playbackSpeed;
+                speedValue.textContent = `${playbackSpeed.toFixed(2)}x`;
+                updateSpeedButtonsActive();
+            });
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    loadReplayData(event.target.result);
+                } catch (error) {
+                    alert('Error loading replay file: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        });
+        
+        // ============================================
+        // MODE TOGGLE
+        // ============================================
+        const replayModeBtn = document.getElementById('replayModeBtn');
+        const playModeBtn = document.getElementById('playModeBtn');
+        const replayControls = document.getElementById('replayControls');
+        const playControls = document.getElementById('playControls');
+        const startGameBtn = document.getElementById('startGameBtn');
+        
+        function switchToReplayMode() {
+            currentMode = 'replay';
+            replayModeBtn.classList.add('active');
+            playModeBtn.classList.remove('active');
+            replayControls.classList.remove('hidden');
+            playControls.classList.remove('visible');
+            
+            // Toggle shortcuts display
+            document.getElementById('replayShortcuts').style.display = 'block';
+            document.getElementById('playShortcuts').style.display = 'none';
+            
+            // Show replay controls in game panel
+            document.querySelector('.controls').style.display = 'flex';
+            
+            // Show status message in replay mode
+            const statusEl = document.getElementById('statusMessage');
+            if (statusEl) {
+                statusEl.style.display = 'block';
+            }
+            
+            // Stop play mode
+            gameState.running = false;
+            
+            // Render current replay frame or empty state
+            if (currentEpisode) {
+                renderFrame();
+            } else {
+                drawBackground();
+                ctx.fillStyle = '#666';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Load a replay file', SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+                ctx.textAlign = 'left';
+            }
+        }
+        
+        function switchToPlayMode() {
+            currentMode = 'play';
+            playModeBtn.classList.add('active');
+            replayModeBtn.classList.remove('active');
+            replayControls.classList.add('hidden');
+            playControls.classList.add('visible');
+            
+            // Toggle shortcuts display
+            document.getElementById('replayShortcuts').style.display = 'none';
+            document.getElementById('playShortcuts').style.display = 'block';
+            
+            // Hide replay controls in game panel
+            document.querySelector('.controls').style.display = 'none';
+            
+            // Hide status message in play mode
+            const statusEl = document.getElementById('statusMessage');
+            if (statusEl) {
+                statusEl.style.display = 'none';
+            }
+            
+            // Stop replay
+            isPlaying = false;
+            updatePlayPauseButton();
+            
+            // Initialize play mode
+            resetGame();
+            drawStartScreen();
+            updatePlayStats();
+        }
+        
+        replayModeBtn.addEventListener('click', switchToReplayMode);
+        playModeBtn.addEventListener('click', switchToPlayMode);
+        
+        // Start game button
+        startGameBtn.addEventListener('click', () => {
+            if (!gameState.running) {
+                resetGame();
+                gameState.running = true;
+                lastFrameTime = performance.now();
+                renderPlayMode();
+            }
+        });
+        
+        // ============================================
+        // INPUT HANDLING
+        // ============================================
+        
+        // Handle flap input for play mode
+        function handleFlap() {
+            if (currentMode !== 'play') return;
+            
+            if (gameState.gameOver) {
+                // Restart game
+                resetGame();
+                gameState.running = true;
+                lastFrameTime = performance.now();
+                renderPlayMode();
+            } else if (!gameState.running) {
+                // Start game
+                gameState.running = true;
+                lastFrameTime = performance.now();
+                gameState.flapRequested = true;
+            } else {
+                // Flap
+                gameState.flapRequested = true;
+            }
+        }
+        
+        // Canvas click/touch for play mode
+        canvas.addEventListener('click', handleFlap);
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handleFlap();
+        });
+        
+        // Keyboard controls (mode-dependent)
+        document.addEventListener('keydown', (e) => {
+            // Common controls
+            if (e.key === 'h' || e.key === 'H') {
+                showHitboxes = !showHitboxes;
+                if (currentMode === 'replay' && currentEpisode) {
+                    renderFrame();
+                } else if (currentMode === 'play') {
+                    renderPlayMode();
+                }
+                return;
+            }
+            
+            if (currentMode === 'replay') {
+                // Replay mode controls
+                switch (e.key) {
+                    case ' ':
+                    case 'k':
+                        playPauseBtn.click();
+                        e.preventDefault();
+                        break;
+                    case 'ArrowLeft':
+                    case 'j':
+                        stepBackBtn.click();
+                        e.preventDefault();
+                        break;
+                    case 'ArrowRight':
+                    case 'l':
+                        stepForwardBtn.click();
+                        e.preventDefault();
+                        break;
+                    case 'r':
+                        restartBtn.click();
+                        e.preventDefault();
+                        break;
+                }
+            } else if (currentMode === 'play') {
+                // Play mode controls
+                switch (e.key) {
+                    case ' ':
+                    case 'ArrowUp':
+                    case 'w':
+                    case 'W':
+                        handleFlap();
+                        e.preventDefault();
+                        break;
+                    case 'r':
+                    case 'R':
+                        // Restart game
+                        resetGame();
+                        gameState.running = false;
+                        drawStartScreen();
+                        updatePlayStats();
+                        e.preventDefault();
+                        break;
+                }
+            }
+        });
+        
+        // Status message helper
+        function showStatus(message, type = 'info') {
+            let statusEl = document.getElementById('statusMessage');
+            if (!statusEl) {
+                statusEl = document.createElement('div');
+                statusEl.id = 'statusMessage';
+                statusEl.className = 'status-message';
+                document.querySelector('.info-panel').appendChild(statusEl);
+            }
+            statusEl.textContent = message;
+            statusEl.className = 'status-message ' + type;
+        }
+        
+        // Auto-load replay file from same directory or embedded data
+        async function autoLoadReplay() {
+            showStatus('Looking for replay.jsonl...', 'loading');
+            
+            // Try different paths
+            const paths = [
+                'replay.jsonl',
+                './replay.jsonl',
+                '../replay.jsonl',
+            ];
+            
+            for (const path of paths) {
+                try {
+                    const response = await fetch(path);
+                    if (response.ok) {
+                        const content = await response.text();
+                        loadReplayData(content);
+                        showStatus(`Loaded from ${path}`, 'success');
+                        return true;
+                    }
+                } catch (e) {
+                    // Continue to next path
+                }
+            }
+            
+            // Check for embedded data in URL hash
+            if (window.location.hash && window.location.hash.length > 1) {
+                try {
+                    const data = decodeURIComponent(window.location.hash.substring(1));
+                    loadReplayData(data);
+                    showStatus('Loaded from URL', 'success');
+                    return true;
+                } catch (e) {
+                    console.error('Failed to load from URL hash:', e);
+                }
+            }
+            
+            showStatus('Upload a replay.jsonl file to start', 'info');
+            return false;
+        }
+        
+        // Initialize
+        async function init() {
+            // Draw initial loading state
+            ctx.fillStyle = COLORS.sky;
+            ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+            
+            ctx.fillStyle = '#666';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Loading...', SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+            ctx.textAlign = 'left';
+            
+            // Start game loop
+            requestAnimationFrame(gameLoop);
+            
+            // Try to auto-load replay
+            const loaded = await autoLoadReplay();
+            
+            if (!loaded) {
+                ctx.fillStyle = COLORS.sky;
+                ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+                ctx.fillStyle = '#666';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Upload replay.jsonl to start', SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 10);
+                ctx.fillText('or place it in the same folder', SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 10);
+                ctx.textAlign = 'left';
+            }
+        }
+        
+        init();
+    </script>
+</body>
+</html>
